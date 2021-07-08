@@ -2,19 +2,44 @@ const headerCityButton = document.querySelector('.header__city-button');
 
 let hash = location.hash.substring(1);
 
-headerCityButton.textContent = localStorage.getItem('lamoda-location') || 'Ваш город?';
+headerCityButton.textContent = localStorage.getItem('lomoda-location') || 'Ваш город?';
+
+// const updateLocation = () => {
+//   const storageLocation = localStorage.getItem('lamoda-location');
+  
+//   headerCityButton.textContent =
+//     storageLocation && storageLocation !== 'null' ?
+//       storageLocation :
+//       'Ваш город?';
+// }
 
 headerCityButton.addEventListener('click', () => {
-  const city = prompt('Укажите Ваш город');
-  headerCityButton.textContent = city;
-  localStorage.setItem('lamoda-location', city);
+  const city = prompt('Укажите ваш город');
+  if (city) {
+    headerCityButton.textContent = city;
+    localStorage.setItem('lomoda-location', city)
+  }
+  return;
+  // const city = prompt('Укажите Ваш город');
+  // if (city !== null) {
+  //   localStorage.setItem('lamoda-location', city)
+  // }
+  // // headerCityButton.textContent = city;
+  // updateLocation();
 });
+
+// updateLocation();
 
 // blocking scroll
 
 const disableScroll = () => {
+
+  if (document.disableScroll) return;
   const widthScroll = window.innerWidth - document.body.offsetWidth;
+
+  document.disableScroll = true;
   document.body.dbScrollY = window.scrollY;
+
   document.body.style.cssText = `
   position: fixed;
   top: ${-window.scrollY}px;
@@ -27,6 +52,8 @@ const disableScroll = () => {
 };
 
 const enableScroll = () => {
+
+  document.disableScroll = false;
   document.body.style.cssText = '';
   window.scroll({
     top: document.body.dbScrollY,
@@ -66,8 +93,8 @@ window.addEventListener('keydown', e => {
 
 // request data base
 
-const getData = async () => {
-  const data = await fetch('db.json');
+const getData = async (server) => {
+  const data = await fetch(server);
   if (data.ok) {
     return data.json();
   } else {
@@ -75,11 +102,11 @@ const getData = async () => {
   }
 }
 
-const getGoods = (cb, value) => {
-  getData()
+const getGoods = (cb, prop, value) => {
+  getData('db.json')
   .then(data => {
       if (value) {
-        cb(data.filter(item => item.category ===value ));
+        cb(data.filter(item => item[prop] ===value ));
       } else {
         cb(data);
       }
@@ -89,17 +116,7 @@ const getGoods = (cb, value) => {
     });
 }
 
-const goodsTitle = document.querySelector('.goods__title');
-const navigationList = document.querySelector('.navigation__list');
-
-navigationList.addEventListener('click', onNavigationClick);
-
-function onNavigationClick(e) {
-
-  if (e.target.nodeName === 'A') {
-    goodsTitle.textContent = e.target.textContent;
-  }
-}
+// page of category
 
 try {
   const goodsList = document.querySelector('.goods__list');
@@ -107,8 +124,40 @@ try {
   if (!goodsList) {
     throw 'This is not a goods page!'
   }
+  
+  const goodsTitle = document.querySelector('.goods__title');
 
+  const changeTitle = () => {
+    goodsTitle.textContent = document.querySelector(`[href*="#${hash}"]`).textContent;
+  }
+  
   const createCard = ({ id, preview, cost, brand, name, sizes }) => {
+    
+    // const navigationList = document.querySelector('.navigation__list');
+
+    // navigationList.addEventListener('click', onNavigationClick);
+
+    // function onNavigationClick(e) {
+
+    //   if (e.target.nodeName === 'A') {
+    //     goodsTitle.textContent = e.target.textContent;
+    //   }
+    // }
+
+    // switch (hash) {
+    //   case 'women':
+    //     goodsTitle.textContent = 'Женщинам';
+    //     break;
+    //   case 'men':
+    //     goodsTitle.textContent = 'Мужчинам';
+    //     break;
+    //   case 'kids':
+    //     goodsTitle.textContent = 'Детям';
+    //     break;
+    //   default:
+    //     goodsTitle.textContent = '';
+    // }
+    
 
     const li = document.createElement('li');
     li.classList.add('goods__item');
@@ -136,19 +185,92 @@ try {
   const renderGoodsList = data => {
     goodsList.textContent = '';
 
-    data.forEach(item => {
-      const card = createCard(item);
-      goodsList.append(card);
-    })
+    // data.forEach(item => {
+    //   const card = createCard(item);
+    //   goodsList.append(card);
+    // })
+
+    const arr = data.map(createCard);
+    goodsList.append(...arr);
   };
 
   window.addEventListener('hashchange', () => {
     hash = location.hash.substring(1);
-    getGoods(renderGoodsList, hash);
+    changeTitle();
+    getGoods(renderGoodsList, 'category', hash);
   })
 
-  getGoods(renderGoodsList, hash);
+  changeTitle();
+  getGoods(renderGoodsList, 'category', hash);
 
+} catch (err) {
+  console.log(err);
+}
+
+// page of goods
+
+try {
+  if (!document.querySelector('.card-good')) {
+    throw 'This is not a card-good page';
+  }
+
+const cardGoodImage = document.querySelector('.card-good__image');
+const cardGoodBrand = document.querySelector('.card-good__brand');
+const cardGoodTitle = document.querySelector('.card-good__title');
+const cardGoodPrice = document.querySelector('.card-good__price');
+const cardGoodColor = document.querySelector('.card-good__color');
+const cardGoodSelectWrapper = document.querySelectorAll('.card-good__select__wrapper');
+const cardGoodColorList = document.querySelector('.card-good__color-list');
+const cardGoodSizes = document.querySelector('.card-good__sizes');
+const cardGoodSizesList = document.querySelector('.card-good__sizes-list');
+const cardGoodBuy = document.querySelector('.card-good__buy');
+
+const generateList = array => array.reduce((markup, item, i) => markup +
+  `<li class="card-good__select-item" data-id="${i}">${item}</li>`, '');
+
+const renderCardGood = ([{ cost, color, brand, name, sizes, photo }]) => {
+    cardGoodImage.src = `goods-image/${photo}`;
+    cardGoodImage.alt = `${brand} ${name}`;
+    cardGoodBrand.textContent = brand;
+    cardGoodTitle.textContent = name;
+    cardGoodPrice.textContent = `${cost} ₽`;
+    if (color) {
+      cardGoodColor.textContent = color[0];
+      cardGoodColor.dataset.id = 0;
+      cardGoodColorList.innerHtml = generateList(color);
+      console.log(cardGoodColorList);
+      console.log(generateList(color));
+    } else {
+      cardGoodColor.style.display = 'none';
+    }
+    if (sizes) {
+      cardGoodSizes.textContent = sizes[0];
+      cardGoodSizes.dataset.id = 0;
+      cardGoodSizesList.innerHtml = generateList(sizes);
+    } else {
+      cardGoodSizes.style.display = 'none';
+    }
+  };
+
+  cardGoodSelectWrapper.forEach(item => {
+    item.addEventListener('click', e => {
+      const target = e.target;
+
+      if (target.closest('.card-good__select')) {
+        target.classList.toggle('card-good__select__open')
+      }
+
+      if (target.closest('.card-good__select-item')) {
+        const cardGoodsSelect = item.querySelector('.card-good__select');
+        cardGoodsSelect.textContent = target.textContent;
+        cardGoodsSelect.dataset.id = target.dataset.id;
+        cardGoodsSelect.classList.remove('card-good__select__open');
+      }
+    });
+  });
+
+  getGoods(renderCardGood, 'id', hash);
+  
 } catch (err) {
   console.log(err);
 }
