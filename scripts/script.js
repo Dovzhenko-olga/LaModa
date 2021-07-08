@@ -237,7 +237,7 @@ const renderCardGood = ([{ cost, color, brand, name, sizes, photo }]) => {
     if (color) {
       cardGoodColor.textContent = color[0];
       cardGoodColor.dataset.id = 0;
-      cardGoodColorList.innerHtml = generateList(color);
+      cardGoodColorList.innerHTML = generateList(color);
       console.log(cardGoodColorList);
       console.log(generateList(color));
     } else {
@@ -246,7 +246,7 @@ const renderCardGood = ([{ cost, color, brand, name, sizes, photo }]) => {
     if (sizes) {
       cardGoodSizes.textContent = sizes[0];
       cardGoodSizes.dataset.id = 0;
-      cardGoodSizesList.innerHtml = generateList(sizes);
+      cardGoodSizesList.innerHTML = generateList(sizes);
     } else {
       cardGoodSizes.style.display = 'none';
     }
